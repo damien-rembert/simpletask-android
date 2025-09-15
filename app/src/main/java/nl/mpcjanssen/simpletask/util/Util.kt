@@ -246,7 +246,7 @@ fun addBusinessDays(originalDate: DateTime, days: Int): DateTime {
 fun addInterval(date: DateTime?, interval: String): DateTime? {
     var newDate = date
     val p = Pattern.compile("(\\d*)([dDwWmMyYbB])")
-    val m = p.matcher(interval.toLowerCase(Locale.getDefault()))
+    val m = p.matcher(interval.lowercase(Locale.getDefault()))
     val amount: Int
     val type: String
     if (newDate == null) {
@@ -259,7 +259,7 @@ fun addInterval(date: DateTime?, interval: String): DateTime? {
     if (m.groupCount() == 2) {
         val amountStr = m.group(1)
         amount = if (amountStr == "")  1 else  Integer.parseInt(m.group(1))
-        type = m.group(2).toLowerCase(Locale.getDefault())
+        type = m.group(2).lowercase(Locale.getDefault())
     } else {
         return newDate
     }
@@ -441,7 +441,7 @@ fun alfaSort(
         prefix: String? = null
 ): ArrayList<String> {
     val sorted = items.sortedWith ( compareBy<String> {
-        if (caseSensitive) it else it.toLowerCase(Locale.getDefault())
+        if (caseSensitive) it else it.lowercase(Locale.getDefault())
     })
     if (prefix != null) {
         val result = ArrayList<String>(sorted.size+1)

@@ -39,7 +39,7 @@ class MultiComparator(sorts: ArrayList<String>, today: String, caseSensitve: Boo
                     if (caseSensitve) {
                         txt
                     } else {
-                        txt.toLowerCase(Locale.getDefault())
+                        txt.lowercase(Locale.getDefault())
                     }
                 }
                 "by_project" -> comp = { t ->
@@ -47,13 +47,13 @@ class MultiComparator(sorts: ArrayList<String>, today: String, caseSensitve: Boo
                     if (caseSensitve) {
                         txt
                     } else {
-                        txt.toLowerCase(Locale.getDefault())
+                        txt.lowercase(Locale.getDefault())
                     }
                 }
                 "alphabetical" -> comp = if (caseSensitve) {
                     { it.alphaParts }
                 } else {
-                    { it.alphaParts.toLowerCase(Locale.getDefault()) }
+                    { it.alphaParts.lowercase(Locale.getDefault()) }
                 }
                 "by_prio" -> comp = { it.priority }
                 "completed" -> comp = { it.isCompleted() }

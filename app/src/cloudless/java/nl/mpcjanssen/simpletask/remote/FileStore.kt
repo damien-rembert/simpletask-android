@@ -166,7 +166,7 @@ object FileStore : IFileStore {
                 if (sel.isDirectory) {
                     result.add(FileEntry(File(filename), true))
                 } else {
-                    !txtOnly || filename.toLowerCase(Locale.getDefault()).endsWith(".txt")
+                    !txtOnly || filename.lowercase(Locale.getDefault()).endsWith(".txt")
                     result.add(FileEntry(File(filename), false))
                 }
             }

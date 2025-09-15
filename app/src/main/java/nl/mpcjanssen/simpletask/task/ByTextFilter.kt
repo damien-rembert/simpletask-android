@@ -26,6 +26,6 @@ class ByTextFilter(val moduleName : String, searchText: String?, internal val is
 
 
     private fun cased(t: String): String {
-        return if (isCaseSensitive) t else t.toUpperCase(Locale.getDefault())
+        return if (isCaseSensitive) t else t.uppercase(Locale.getDefault())
     }
 }
