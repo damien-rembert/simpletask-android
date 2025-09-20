@@ -600,7 +600,7 @@ class Simpletask : ThemedNoActionBarActivity() {
                     @StyleableRes
                     val primaryDarkIdx = 1
 
-                    val a: TypedArray = obtainStyledAttributes(intArrayOf(R.attr.colorPrimary, R.attr.colorPrimaryDark))
+                    val a: TypedArray = obtainStyledAttributes(intArrayOf(androidx.appcompat.R.attr.colorPrimary, androidx.appcompat.R.attr.colorPrimaryDark))
                     try {
                         val colorPrimary = ContextCompat.getDrawable(this, a.getResourceId(primaryIdx, 0))
 
@@ -684,7 +684,7 @@ class Simpletask : ThemedNoActionBarActivity() {
 
             override fun onMenuItemActionExpand(item: MenuItem): Boolean {
                 //get focus
-                item.actionView.requestFocus()
+                item.actionView?.requestFocus()
                 //get input method
                 val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
                 imm.toggleSoftInput(0, InputMethodManager.HIDE_NOT_ALWAYS)

@@ -16,8 +16,8 @@ import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.collections.ArrayList
 
 /**
- * Implementation of the in memory representation of the Todo list
- * uses an ActionQueue to ensure modifications and access of the underlying todo list are
+ * Implementation of the in memory representation of the task list
+ * uses an ActionQueue to ensure modifications and access of the underlying task list are
  * sequential. If this is not done properly the result is a likely ConcurrentModificationException.
 
  * @author Mark Janssen

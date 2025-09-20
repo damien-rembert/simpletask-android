@@ -1,20 +1,24 @@
 buildscript {
-    ext.kotlin_version = '1.4.32'
-    ext.android_gradle_build_version = '7.2.1'
+    ext.kotlin_version = '2.2.20'
+    ext.android_gradle_build_version = '8.13.0'
     repositories {
-        google()
         mavenCentral()
+        google()
         // jcenter()
         maven {
-            url "https://oss.sonatype.org/content/repositories/snapshots"
+            url = "https://oss.sonatype.org/content/repositories/snapshots"
         }
         maven {
-            url "https://plugins.gradle.org/m2/"
+            url = "https://plugins.gradle.org/m2/"
         }
     }
     dependencies {
         classpath "com.android.tools.build:gradle:$android_gradle_build_version"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
+}
+
+plugins {
+    id 'com.google.devtools.ksp' version '2.2.20-2.0.3' apply false
 }
 

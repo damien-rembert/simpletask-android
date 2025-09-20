@@ -42,7 +42,7 @@ import android.view.MenuItem
 import androidx.annotation.RequiresApi
 import java.util.*
 
-class Preferences : ThemedPreferenceActivity(), SharedPreferences.OnSharedPreferenceChangeListener {
+abstract class Preferences : ThemedPreferenceActivity(), SharedPreferences.OnSharedPreferenceChangeListener {
 
     lateinit var prefs: SharedPreferences
     lateinit var app: TodoApplication
@@ -70,8 +70,8 @@ class Preferences : ThemedPreferenceActivity(), SharedPreferences.OnSharedPrefer
         localBroadcastManager.registerReceiver(m_broadcastReceiver, intentFilter)
     }
 
-    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
-        when (key) {
+    override fun onSharedPreferenceChanged(p0: SharedPreferences, p1: String?) {
+        when (p1) {
             getString(R.string.calendar_sync_thresholds),
             getString(R.string.calendar_sync_dues) -> requestCalendarPermission()
             getString(R.string.theme_pref_key) -> {

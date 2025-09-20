@@ -12,14 +12,16 @@ import android.util.Log
 import android.view.Menu
 import android.widget.ScrollView
 import android.widget.TextView
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import nl.mpcjanssen.simpletask.dao.AppDatabase
 import nl.mpcjanssen.simpletask.dao.DB_FILE
 import nl.mpcjanssen.simpletask.dao.TodoFile
 import nl.mpcjanssen.simpletask.util.createCachedDatabase
 import nl.mpcjanssen.simpletask.util.shareText
 import nl.mpcjanssen.simpletask.util.showToastShort
-import org.jetbrains.anko.doAsync
-import org.jetbrains.anko.uiThread
 import java.io.File
 import java.lang.Integer.max
 import java.text.SimpleDateFormat
@@ -46,9 +48,9 @@ class HistoryScreen : ThemedActionBarActivity() {
             setTitle(title)
         }
         setContentView(R.layout.history)
-        doAsync {
+        lifecycleScope.launch(Dispatchers.IO) {
             history = db.todoFileDao().getAll()
-            uiThread {
+            withContext(Dispatchers.Main) {
                 initToolbar()
                 displayCurrent()
             }
@@ -119,16 +121,15 @@ class HistoryScreen : ThemedActionBarActivity() {
 
     private fun clearDatabase() {
         Log.i(TAG, "Clearing history database")
-        doAsync {
+        lifecycleScope.launch(Dispatchers.IO) {
             db.todoFileDao().deleteAll()
             history = db.todoFileDao().getAll()
-            uiThread {
+            withContext(Dispatchers.Main) {
                 updateMenu()
                 displayCurrent()
             }
         }
     }
-
     private fun showNext() {
         saveScroll()
         cursorIdx = maxOf(cursorIdx + 1, history.size - 1)

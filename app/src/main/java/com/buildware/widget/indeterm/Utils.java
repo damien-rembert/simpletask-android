@@ -13,6 +13,8 @@ import android.util.StateSet;
 import android.util.TypedValue;
 import android.view.View;
 import nl.mpcjanssen.simpletask.R;
+// import androidx.appcompat.R;
+import androidx.appcompat.R.attr;
 
 class Utils {
     public static int applyAlpha(int color, float alpha) {
@@ -44,8 +46,10 @@ class Utils {
                 StateSet.WILD_CARD
         };
 
-        final int normal = resolveColor(context, R.attr.colorControlNormal, Color.DKGRAY);
-        final int activated = resolveColor(context, R.attr.colorControlActivated, Color.CYAN);
+
+
+        final int normal = resolveColor(context, attr.colorControlNormal, Color.DKGRAY);
+        final int activated = resolveColor(context, attr.colorControlActivated, Color.CYAN);
         final float disabledAlpha = resolveFloat(context, android.R.attr.disabledAlpha, 0.25f);
         final int[] colors = new int[]{
                 Utils.applyAlpha(normal, disabledAlpha),
