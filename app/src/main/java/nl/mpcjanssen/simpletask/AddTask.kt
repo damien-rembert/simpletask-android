@@ -101,7 +101,7 @@ class AddTask : ThemedActionBarActivity() {
                 intent.hasExtra(Query.INTENT_JSON) -> Query(intent, luaModule = "from_intent").prefill
                 else -> ""
             }
-            startText = preFillString
+            startText = preFillString?:""
             // Avoid discarding changes on rotate
             if (binding.taskText.text.isEmpty()) {
                 binding.taskText.setText(preFillString)
@@ -247,7 +247,7 @@ class AddTask : ThemedActionBarActivity() {
         todoList.update(origTasks, enteredTasks, TodoApplication.config.hasAppendAtEnd)
 
         // Save
-        todoList.notifyTasklistChanged(TodoApplication.config.todoFile, save = true, refreshMainUI = false)
+        todoList.notifyTasklistChanged(TodoApplication.config.todoUri, save = true, refreshMainUI = false)
         finishEdit(confirmation = false)
     }
 

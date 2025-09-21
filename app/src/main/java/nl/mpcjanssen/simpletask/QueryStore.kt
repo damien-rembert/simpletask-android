@@ -12,19 +12,21 @@ object QueryStore {
     const val TAG = "QueryStore"
 
     fun importFilters(importFile: File) {
-        FileStore.readFile(importFile) { contents ->
-            val jsonFilters = JSONObject(contents)
-            jsonFilters.keys().forEach { name ->
-                val json = jsonFilters.getJSONObject(name)
-                val newQuery = Query(json, luaModule = "mainui")
-                save(newQuery, name)
-            }
-        }
+        // TODO: implement with SAF
+//         FileStore.readFile(importFile) { contents ->
+//             val jsonFilters = JSONObject(contents)
+//             jsonFilters.keys().forEach { name ->
+//                 val json = jsonFilters.getJSONObject(name)
+//                 val newQuery = Query(json, luaModule = "mainui")
+//                 save(newQuery, name)
+//             }
+//         }
     }
 
     fun exportFilters(exportFile: File) {
-        val json = TodoApplication.config.savedQueriesJSONString
-        FileStore.writeFile(exportFile, json)
+        // TODO: implement with SAF
+//        val json = TodoApplication.config.savedQueriesJSONString
+//        FileStore.writeFile(exportFile, json)
     }
 
     fun ids() : List<String> {

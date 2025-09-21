@@ -1,5 +1,6 @@
 package nl.mpcjanssen.simpletask.util
 
+import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.util.Log
@@ -68,6 +69,8 @@ class Config(app: TodoApplication) : Preferences(app) {
                 return getString(R.string.project_prompt)
             }
         }
+
+    var lastSeenRemoteContent by StringOrNullPreference(R.string.last_remote_file)
 
     var lastScrollPosition by IntPreference(R.string.ui_last_scroll_position, -1)
 
@@ -180,17 +183,22 @@ class Config(app: TodoApplication) : Preferences(app) {
     val defaultSorts: Array<String>
         get() = TodoApplication.app.resources.getStringArray(R.array.sortKeys)
 
-    private var _todoFileName by StringOrNullPreference(R.string.todo_file_key)
-    val todoFile: File
-        get()  = _todoFileName?.let { File(it )} ?: FileStore.getDefaultFile()
+    var _todoUri by StringOrNullPreference(R.string.todo_uri_key)
 
-
-
-    fun setTodoFile(file: File?) {
-        _todoFileName = file?.path
-        clearCache()
+    var todoUri : Uri?
+        get() = _todoUri?.let{Uri.parse(it) }
+        set(uri) {
+            _todoUri = uri.toString()
     }
 
+    // TODO: implement with SAF
+//    fun setTodoFile(file: File?) {
+  //      _todoFileName = file?.path
+    //    clearCache()
+    // }
+
+
+    // TODO: use with SAF
     val doneFile: File
         @RequiresApi(Build.VERSION_CODES.M)
         get() {
@@ -201,9 +209,12 @@ class Config(app: TodoApplication) : Preferences(app) {
     fun clearCache() {
         cachedContents = null
         todoList = null
-        FileStore.todoNameChanged()
+        lastSeenRemoteContent = null
+        // TODO: implement with SAF
+//        FileStore.todoNameChanged()
     }
 
+    // TODO: implement with SAF
     val isAutoArchive by BooleanPreference(R.string.auto_archive_pref_key, false)
 
     val hasPrependDate by BooleanPreference(R.string.prepend_date_pref_key, true)

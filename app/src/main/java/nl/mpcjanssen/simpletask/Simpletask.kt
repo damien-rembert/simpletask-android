@@ -12,6 +12,7 @@
 package nl.mpcjanssen.simpletask
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.DatePickerDialog
 import android.app.PendingIntent
 import android.app.SearchManager
@@ -42,6 +43,7 @@ import androidx.annotation.RequiresApi
 import androidx.core.content.FileProvider
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.multidex.BuildConfig
 
 import hirondelle.date4j.DateTime
 import nl.mpcjanssen.simpletask.adapters.DrawerAdapter
@@ -65,6 +67,28 @@ class Simpletask : ThemedNoActionBarActivity() {
         // Drawer side
         private val SAVED_FILTER_DRAWER = GravityCompat.END
         private val QUICK_FILTER_DRAWER = GravityCompat.START
+    }
+
+    val TODO_SELECT = 1
+    fun browseForNewTodoFile () {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
+        intent.addCategory(Intent.CATEGORY_OPENABLE)
+        intent.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+        intent.type = "*/*"
+        startActivityForResult(intent, TODO_SELECT)
+
+    }
+    override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
+        super.onActivityResult(requestCode, resultCode, resultData)
+        if (requestCode == TODO_SELECT && resultCode == Activity.RESULT_OK) {
+            if (resultData != null) {
+                resultData.data?.let {
+                    TodoApplication.app.switchTodoUri(it, resultData.flags)
+                }
+            }
+        }
     }
     private var options_menu: Menu? = null
 
@@ -103,13 +127,13 @@ class Simpletask : ThemedNoActionBarActivity() {
                     completeTasks(it)
                     // Update the tri state checkbox
                     handleMode(mapOf(Mode.SELECTION to { invalidateOptionsMenu() }))
-                    TodoApplication.todoList.notifyTasklistChanged(TodoApplication.config.todoFile, save = false, refreshMainUI = true)
+                    TodoApplication.todoList.notifyTasklistChanged(TodoApplication.config.todoUri, save = false, refreshMainUI = true)
                 },
                 unCompleteAction = {
                     uncompleteTasks(it)
                     // Update the tri state checkbox
                     handleMode(mapOf(Mode.SELECTION to { invalidateOptionsMenu() }))
-                    TodoApplication.todoList.notifyTasklistChanged(TodoApplication.config.todoFile, true)
+                    TodoApplication.todoList.notifyTasklistChanged(TodoApplication.config.todoUri, true)
                 },
                 onClickAction = {
                     val newSelectedState = !TodoApplication.todoList.isSelected(it)
@@ -157,11 +181,11 @@ class Simpletask : ThemedNoActionBarActivity() {
                             Log.i(TAG, "" + actions[which] + ": " + url)
                             when (actions[which]) {
                                 Action.LINK -> when {
-                                    url.startsWith("todo://") -> {
-                                        val todoFolder = TodoApplication.config.todoFile.parentFile
-                                        val newName = File(todoFolder, url.substring(7))
-                                        TodoApplication.app.switchTodoFile(newName)
-                                    }
+//                                     url.startsWith("todo://") -> {
+//                                         val todoFolder = TodoApplication.config.todoFile.parentFile
+//                                         val newName = File(todoFolder, url.substring(7))
+//                                         TodoApplication.app.switchTodoFile(newName)
+//                                     }
                                     url.startsWith("root://") -> {
                                         val rootFolder = TodoApplication.config.localFileRoot
                                         val file = File(rootFolder, url.substring(7))
@@ -171,6 +195,7 @@ class Simpletask : ThemedNoActionBarActivity() {
                                         val mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(file.extension)
                                         actionIntent.setDataAndType(contentUri, mime)
                                         actionIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                        actionIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
                                         startActivity(actionIntent)
                                     }
                                     else -> try {
@@ -221,18 +246,7 @@ class Simpletask : ThemedNoActionBarActivity() {
 
         val broadcastReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, receivedIntent: Intent) {
-                if (receivedIntent.action == Constants.BROADCAST_ACTION_LOGOUT) {
-                    Log.i(TAG, "Logging out from Dropbox")
-                    finish()
-                    FileStoreActionQueue.add("Logout") {
-                        try {
-                            FileStore.logout()
-                        } catch (e: Exception) {
-                            Log.e(TAG, "Error logging out.", e)
-                        }
-                        startLogin()
-                    }
-                } else if (receivedIntent.action == Constants.BROADCAST_TASKLIST_CHANGED) {
+                if (receivedIntent.action == Constants.BROADCAST_TASKLIST_CHANGED) {
                     Log.i(TAG, "Tasklist changed, refiltering adapter")
                     taskAdapter.setFilteredTasks(this@Simpletask, TodoApplication.config.mainQuery)
                     runOnUiThread {
@@ -253,8 +267,6 @@ class Simpletask : ThemedNoActionBarActivity() {
                 } else if (receivedIntent.action == Constants.BROADCAST_THEME_CHANGED ||
                         receivedIntent.action == Constants.BROADCAST_DATEBAR_SIZE_CHANGED) {
                     recreate()
-                } else if (receivedIntent.action == Constants.BROADCAST_AUTH_FAILED) {
-                    startLogin()
                 }
             }
         }
@@ -418,6 +430,7 @@ class Simpletask : ThemedNoActionBarActivity() {
     private fun handleIntent() {
 
 
+
         binding.drawerLayout.let { drawerLayout ->
             m_drawerToggle = object : ActionBarDrawerToggle(this, /* host Activity */
                     drawerLayout, /* DrawerLayout object */
@@ -500,12 +513,6 @@ class Simpletask : ThemedNoActionBarActivity() {
         listView.viewTreeObserver?.addOnScrollChangedListener(listener)
 
         binding.fab.setOnClickListener { startAddTaskActivity() }
-    }
-
-
-
-    private fun startLogin() {
-        TodoApplication.app.startLogin(this)
     }
 
     private fun updateCompletionCheckboxState() {
@@ -616,7 +623,9 @@ class Simpletask : ThemedNoActionBarActivity() {
 
                     populateSearch(menu)
                     if (TodoApplication.config.showTodoPath) {
-                        title = TodoApplication.config.todoFile.canonicalPath.replace("([^/])[^/]*/".toRegex(), "$1/")
+                        // TODO: check matching regex
+                        //                         title = TodoApplication.config.todoFile.canonicalPath.replace("([^/])[^/]*/".toRegex(), "$1/")
+                        title = TodoApplication.config.todoUri?.lastPathSegment?.replace("([^/])[^/]*/".toRegex(), "$1/")
                     } else {
                         setTitle(R.string.app_label)
                     }
@@ -735,7 +744,7 @@ class Simpletask : ThemedNoActionBarActivity() {
             dialog.dismiss()
             val priority = Priority.toPriority(priorityArr[which])
             TodoApplication.todoList.prioritize(tasks, priority)
-            TodoApplication.todoList.notifyTasklistChanged(TodoApplication.config.todoFile, true)
+            TodoApplication.todoList.notifyTasklistChanged(TodoApplication.config.todoUri, true)
         })
         builder.show()
 
@@ -749,10 +758,11 @@ class Simpletask : ThemedNoActionBarActivity() {
 
     private fun completeTasks(tasks: List<Task>) {
         TodoApplication.todoList.complete(tasks, TodoApplication.config.hasKeepPrio, TodoApplication.config.hasAppendAtEnd)
-        if (TodoApplication.config.isAutoArchive) {
-            archiveTasks(false)
-        }
-        TodoApplication.todoList.notifyTasklistChanged(TodoApplication.config.todoFile, true)
+        // TODO: implement with SAF
+//        if (TodoApplication.config.isAutoArchive) {
+//            archiveTasks(false)
+//        }
+        TodoApplication.todoList.notifyTasklistChanged(TodoApplication.config.todoUri, true)
     }
 
     private fun uncompleteTasks(task: Task) {
@@ -763,7 +773,7 @@ class Simpletask : ThemedNoActionBarActivity() {
 
     private fun uncompleteTasks(tasks: List<Task>) {
         TodoApplication.todoList.uncomplete(tasks)
-        TodoApplication.todoList.notifyTasklistChanged(TodoApplication.config.todoFile, true)
+        TodoApplication.todoList.notifyTasklistChanged(TodoApplication.config.todoUri, true)
     }
 
     private fun deferTasks(tasks: List<Task>, dateType: DateType) {
@@ -783,7 +793,7 @@ class Simpletask : ThemedNoActionBarActivity() {
                         startMonth++
                         val date = DateTime.forDateOnly(year, startMonth, day)
                         TodoApplication.todoList.defer(date.format(Constants.DATE_FORMAT), tasks, dateType)
-                        TodoApplication.todoList.notifyTasklistChanged(TodoApplication.config.todoFile, true)
+                        TodoApplication.todoList.notifyTasklistChanged(TodoApplication.config.todoUri, true)
                     },
                             today.year!!,
                             today.month!! - 1,
@@ -796,7 +806,7 @@ class Simpletask : ThemedNoActionBarActivity() {
                 } else {
 
                     TodoApplication.todoList.defer(input, tasks, dateType)
-                    TodoApplication.todoList.notifyTasklistChanged(TodoApplication.config.todoFile, true)
+                    TodoApplication.todoList.notifyTasklistChanged(TodoApplication.config.todoUri, true)
 
                 }
 
@@ -811,47 +821,48 @@ class Simpletask : ThemedNoActionBarActivity() {
                 .replaceFirst(Regex("%s"), numTasks.toString())
         val delete = DialogInterface.OnClickListener { _, _ ->
             TodoApplication.todoList.removeAll(tasks)
-            TodoApplication.todoList.notifyTasklistChanged(TodoApplication.config.todoFile, true)
+            TodoApplication.todoList.notifyTasklistChanged(TodoApplication.config.todoUri, true)
             invalidateOptionsMenu()
         }
         showConfirmationDialog(this, R.string.delete_task_message, delete, title)
     }
 
-    private fun archiveTasks(showDialog: Boolean = true) {
-        val selection = TodoApplication.todoList.selectedTasks
-
-        val tasksToArchive =  ArrayList<Task>()
-        if (selection.isNotEmpty()) {
-            tasksToArchive.addAll(selection)
-        } else {
-            tasksToArchive.addAll(taskAdapter.visibleLines.asSequence()
-                    .filterNot { it.header }
-                    .map { (it as TaskLine).task }
-                    .filter {it.isCompleted()})
-        }
-
-        val archiveAction = {
-            if (TodoApplication.config.todoFile.canonicalPath == TodoApplication.config.doneFile.canonicalPath) {
-                showToastShort(this, "You have the done.txt file opened.")
-            } else {
-                TodoApplication.todoList.archive(TodoApplication.config.todoFile, TodoApplication.config.doneFile, tasksToArchive, TodoApplication.config.eol)
-                invalidateOptionsMenu()
-            }
-        }
-        val numTasks = tasksToArchive.size
-        if (numTasks == 0) {
-            showToastLong(this, R.string.no_tasks_to_archive)
-            return
-        }
-        if (showDialog) {
-            val title = getString(R.string.archive_task_title).replaceFirst(Regex("%s"), numTasks.toString())
-            val archive = DialogInterface.OnClickListener { _, _ -> archiveAction() }
-            showConfirmationDialog(this, R.string.delete_task_message, archive, title)
-        } else {
-            archiveAction()
-        }
-
-    }
+    // TODO: implement with SAF
+//     private fun archiveTasks(showDialog: Boolean = true) {
+//         val selection = TodoApplication.todoList.selectedTasks
+//
+//         val tasksToArchive =  ArrayList<Task>()
+//         if (selection.isNotEmpty()) {
+//             tasksToArchive.addAll(selection)
+//         } else {
+//             tasksToArchive.addAll(taskAdapter.visibleLines.asSequence()
+//                     .filterNot { it.header }
+//                     .map { (it as TaskLine).task }
+//                     .filter {it.isCompleted()})
+//         }
+//
+//         val archiveAction = {
+//             if (TodoApplication.config.todoFile.canonicalPath == TodoApplication.config.doneFile.canonicalPath) {
+//                 showToastShort(this, "You have the done.txt file opened.")
+//             } else {
+//                 TodoApplication.todoList.archive(TodoApplication.config.todoFile, TodoApplication.config.doneFile, tasksToArchive, TodoApplication.config.eol)
+//                 invalidateOptionsMenu()
+//             }
+//         }
+//         val numTasks = tasksToArchive.size
+//         if (numTasks == 0) {
+//             showToastLong(this, R.string.no_tasks_to_archive)
+//             return
+//         }
+//         if (showDialog) {
+//             val title = getString(R.string.archive_task_title).replaceFirst(Regex("%s"), numTasks.toString())
+//             val archive = DialogInterface.OnClickListener { _, _ -> archiveAction() }
+//             showConfirmationDialog(this, R.string.delete_task_message, archive, title)
+//         } else {
+//             archiveAction()
+//         }
+//
+//     }
 
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -881,15 +892,18 @@ class Simpletask : ThemedNoActionBarActivity() {
                 val shareText = selectedTasksAsString()
                 shareText(this@Simpletask, "Simpletask tasks", shareText)
             }
-            R.id.context_archive -> archiveTasks(TodoApplication.config.showConfirmationDialogs)
+            // TODO: implement with SAF
+//            R.id.context_archive -> archiveTasks(TodoApplication.config.showConfirmationDialogs)
             R.id.help -> showHelp()
             R.id.open_lua -> openLuaConfig()
             R.id.sync -> {
                 broadcastFileSync(TodoApplication.app.localBroadCastManager)
             }
-            R.id.archive -> archiveTasks(true)
-            R.id.show_filter_drawer -> openSavedFilterDrawer()
-            R.id.open_file -> TodoApplication.app.browseForNewFile(this)
+            // TODO: implement with SAF
+//            R.id.archive -> archiveTasks(true)
+//            R.id.show_filter_drawer -> openSavedFilterDrawer()
+//            R.id.open_file -> TodoApplication.app.browseForNewFile(this)
+            R.id.open_file -> browseForNewTodoFile()
             R.id.history -> startActivity(Intent(this, HistoryScreen::class.java))
             R.id.btn_filter_add -> onAddFilterClick()
             R.id.clear_filter -> clearFilter()
@@ -901,34 +915,36 @@ class Simpletask : ThemedNoActionBarActivity() {
             R.id.update_tags -> updateTags(checkedTasks)
             R.id.pin_notification -> pinNotification(checkedTasks)
             R.id.menu_export_filter_export -> {
-                FileStoreActionQueue.add("Exporting filters") {
-                    try {
-                        val filename = if (FileStore.isEncrypted) "saved_filters.txt.jenc"
-                        else "saved_filters.txt"
-                        QueryStore.exportFilters(File(TodoApplication.config.todoFile.parentFile, filename))
-                        showToastShort(this, R.string.saved_filters_exported)
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Export filters failed", e)
-                        showToastLong(this, "Error exporting filters")
-                    }
-                }
+                // TODO: implement with SAF
+//                 FileStoreActionQueue.add("Exporting filters") {
+//                     try {
+//                         val filename = if (FileStore.isEncrypted) "saved_filters.txt.jenc"
+//                         else "saved_filters.txt"
+//                         QueryStore.exportFilters(File(TodoApplication.config.todoFile.parentFile, filename))
+//                         showToastShort(this, R.string.saved_filters_exported)
+//                     } catch (e: Exception) {
+//                         Log.e(TAG, "Export filters failed", e)
+//                         showToastLong(this, "Error exporting filters")
+//                     }
+//                 }
             }
             R.id.menu_export_filter_import -> {
-                FileStoreActionQueue.add("Importing filters") {
-                    val filename = if (FileStore.isEncrypted) "saved_filters.txt.jenc"
-                    else "saved_filters.txt"
-                    val importFile = File(TodoApplication.config.todoFile.parentFile, filename)
-                    try {
-                        QueryStore.importFilters(importFile)
-                        showToastShort(this, R.string.saved_filters_imported)
-                        uiHandler.forEvent(Event.SAVED_FILTERS_IMPORTED)
-
-                    } catch (e: Exception) {
-                        // Need to catch generic exception because Dropbox errors don't inherit from IOException
-                        Log.e(TAG, "Import filters, cant read file ${importFile}", e)
-                        showToastLong(this, "Error reading file ${importFile}")
-                    }
-                }
+//                 // TODO: implement with SAF
+//                 FileStoreActionQueue.add("Importing filters") {
+//                     val filename = if (FileStore.isEncrypted) "saved_filters.txt.jenc"
+//                     else "saved_filters.txt"
+//                     val importFile = File(TodoApplication.config.todoFile.parentFile, filename)
+//                     try {
+//                         QueryStore.importFilters(importFile)
+//                         showToastShort(this, R.string.saved_filters_imported)
+//                         uiHandler.forEvent(Event.SAVED_FILTERS_IMPORTED)
+//
+//                     } catch (e: Exception) {
+//                         // Need to catch generic exception because Dropbox errors don't inherit from IOException
+//                         Log.e(TAG, "Import filters, cant read file ${importFile}", e)
+//                         showToastLong(this, "Error reading file ${importFile}")
+//                     }
+//                 }
             }
             else -> return super.onOptionsItemSelected(item)
         }
@@ -1102,7 +1118,7 @@ class Simpletask : ThemedNoActionBarActivity() {
                 Task::addList,
                 Task::removeList
         ) {
-            TodoApplication.todoList.notifyTasklistChanged(TodoApplication.config.todoFile, true)
+            TodoApplication.todoList.notifyTasklistChanged(TodoApplication.config.todoUri, true)
         }
     }
 
@@ -1115,7 +1131,7 @@ class Simpletask : ThemedNoActionBarActivity() {
                 Task::addTag,
                 Task::removeTag
         ) {
-            TodoApplication.todoList.notifyTasklistChanged(TodoApplication.config.todoFile, true)
+            TodoApplication.todoList.notifyTasklistChanged(TodoApplication.config.todoUri, true)
         }
     }
 
@@ -1320,13 +1336,13 @@ class Simpletask : ThemedNoActionBarActivity() {
             // Show connectivity status indicator
             // Red -> changes pending
             // Yellow -> offline
-            if (TodoApplication.config.changesPending) {
+            if (TodoApplication.config.changesPending && TodoApplication.config.todoUri != null) {
                 binding.pendingchanges.visibility = View.VISIBLE
                 binding.offline.visibility = View.GONE
-            } else if (!FileStore.isOnline) {
-                binding.pendingchanges.visibility = View.GONE
-                binding.offline.visibility = View.VISIBLE
-            } else {
+//            } else if (!FileStore.isOnline) {
+//                binding.pendingchanges.visibility = View.GONE
+//                binding.offline.visibility = View.VISIBLE
+            }  else {
                 binding.pendingchanges.visibility = View.GONE
                 binding.offline.visibility = View.GONE
             }

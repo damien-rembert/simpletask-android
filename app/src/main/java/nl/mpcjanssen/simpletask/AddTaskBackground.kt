@@ -101,7 +101,10 @@ class AddTaskBackground : Activity() {
         if (intent.hasExtra(Intent.EXTRA_STREAM)) {
             Log.d(TAG, "Voice note added.")
         }
-        addBackgroundTask(task, append_text)
+        //         addBackgroundTask(task, append_text)
+        task?.let {
+            addBackgroundTask(it, append_text)
+        }
     }
 
     private fun addBackgroundTask(sharedText: String, appendText: String) {
@@ -118,7 +121,7 @@ class AddTaskBackground : Activity() {
         }
 
         todoList.add(tasks, TodoApplication.config.hasAppendAtEnd)
-        todoList.notifyTasklistChanged(TodoApplication.config.todoFile, save = true, refreshMainUI = true)
+        todoList.notifyTasklistChanged(TodoApplication.config.todoUri, save = true, refreshMainUI = true)
         showToastShort(TodoApplication.app, R.string.task_added)
         if (TodoApplication.config.hasShareTaskShowsEdit) {
             todoList.editTasks(this, tasks, "")

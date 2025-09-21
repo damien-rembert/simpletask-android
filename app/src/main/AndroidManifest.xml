@@ -27,7 +27,6 @@ You should have received a copy of the GNU General Public License along with Sim
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
     <uses-permission android:name="android.permission.READ_CALENDAR" />
     <uses-permission android:name="android.permission.WRITE_CALENDAR" />
-
     <supports-screens
         android:anyDensity="true"
         android:largeScreens="true"
@@ -42,6 +41,12 @@ You should have received a copy of the GNU General Public License along with Sim
         android:label="@string/app_label"
         android:theme="@style/LaunchScreen"
         android:supportsRtl="true">
+        <provider
+                android:exported="true"
+                android:name="nl.mpcjanssen.simpletask.CachedFileProvider"
+                android:authorities="${applicationId}.provider" tools:ignore="ExportedContentProvider">
+            <grant-uri-permission android:pathPattern=".*" />
+        </provider>
         <!-- tools:ignore="UnusedAttribute" -->
         <activity
             android:name=".HelpScreen"

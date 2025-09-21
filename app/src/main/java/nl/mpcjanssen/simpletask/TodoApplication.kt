@@ -39,6 +39,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.NotificationCompat
 import android.appwidget.AppWidgetManager
 import android.content.*
+import android.net.Uri
 import android.os.Build
 import android.os.SystemClock
 import androidx.multidex.MultiDexApplication
@@ -48,11 +49,10 @@ import androidx.room.Room
 import nl.mpcjanssen.simpletask.dao.AppDatabase
 import nl.mpcjanssen.simpletask.dao.DB_FILE
 import nl.mpcjanssen.simpletask.dao.TodoFile
-
 import nl.mpcjanssen.simpletask.remote.BackupInterface
-import nl.mpcjanssen.simpletask.remote.FileDialog
+// import nl.mpcjanssen.simpletask.remote.FileDialog
 import nl.mpcjanssen.simpletask.remote.FileStore
-import nl.mpcjanssen.simpletask.task.Task
+// import nl.mpcjanssen.simpletask.task.Task
 import nl.mpcjanssen.simpletask.task.TodoList
 import nl.mpcjanssen.simpletask.util.*
 import nl.mpcjanssen.simpletask.Constants
@@ -200,15 +200,29 @@ class TodoApplication : Application() {
     }
 
     fun switchTodoFile(newTodo: File) {
-        if (config.changesPending) {
-            // Don't switch files when there are pending changes. This will lead to
-            // data corruption
-            Log.i(TAG, "Not switching, changes pending")
-            showToastLong(app, "Not switching files when changes are pending")
-        } else {
-            config.setTodoFile(newTodo)
-            loadTodoList("from file switch")
+// TODO: check this after SAF changes
+//         if (config.changesPending) {
+//             // Don't switch files when there are pending changes. This will lead to
+//             // data corruption
+//             Log.i(TAG, "Not switching, changes pending")
+//             showToastLong(app, "Not switching files when changes are pending")
+//         } else {
+//             config.setTodoFile(newTodo)
+//             loadTodoList("from file switch")
+//         }
+        applicationContext.contentResolver.let { resolver ->
+            resolver.takePersistableUriPermission(newTodo, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+            resolver.persistedUriPermissions.forEach {
+                if (it.uri != newTodo) {
+                    resolver.releasePersistableUriPermission(it.uri, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                }
+            }
+
+            config.todoUri = newTodo
         }
+
+        loadTodoList("from file switch")
+//        }
     }
 
     fun loadTodoList(reason: String) {
@@ -257,31 +271,32 @@ class TodoApplication : Application() {
 
     fun clearTodoFile() {
         config.clearCache()
-        config.setTodoFile(null)
+        // TODO: use setTodoUri?
+        config.todoUri = null
     }
 
-    fun startLogin(caller: Activity) {
-        val loginActivity = FileStore.loginActivity()?.java
-        loginActivity?.let {
-            val intent = Intent(caller, it)
-            caller.startActivity(intent)
-        }
-    }
-
-    fun browseForNewFile(act: Activity) {
-        val fileStore = FileStore
-        FileDialog.browseForNewFile(
-            act,
-            fileStore,
-            config.todoFile.parentFile,
-            object : FileDialog.FileSelectedListener {
-                override fun fileSelected(file: File) {
-                    switchTodoFile(file)
-                }
-            },
-            config.showTxtOnly
-        )
-    }
+//     fun startLogin(caller: Activity) {
+//         val loginActivity = FileStore.loginActivity()?.java
+//         loginActivity?.let {
+//             val intent = Intent(caller, it)
+//             caller.startActivity(intent)
+//         }
+//     }
+//
+//     fun browseForNewFile(act: Activity) {
+//         val fileStore = FileStore
+//         FileDialog.browseForNewFile(
+//             act,
+//             fileStore,
+//             config.todoFile.parentFile,
+//             object : FileDialog.FileSelectedListener {
+//                 override fun fileSelected(file: File) {
+//                     switchTodoFile(file)
+//                 }
+//             },
+//             config.showTxtOnly
+//         )
+//     }
 
     private fun createNotificationChannel() {
         // Create the NotificationChannel, but only on API 26+ because
@@ -315,10 +330,10 @@ class TodoApplication : Application() {
 
 
 object Backupper : BackupInterface {
-    override fun backup(file: File, lines: List<String>) {
+    override fun backup(uri: Uri?, lines: List<String>) {
         val start = SystemClock.elapsedRealtime()
         val now = Date().time
-        val fileToBackup = TodoFile(lines.joinToString("\n"), file.canonicalPath, now)
+        val fileToBackup = TodoFile(lines.joinToString("\n"), uri?.path ?: "unset", now)
         val dao = TodoApplication.db.todoFileDao()
         if (dao.insert(fileToBackup) == -1L) {
             dao.update(fileToBackup)
