@@ -19,7 +19,7 @@ import android.view.Window
 import android.view.WindowManager
 import hirondelle.date4j.DateTime
 import nl.mpcjanssen.simpletask.databinding.AddTaskBinding
-import nl.mpcjanssen.simpletask.databinding.LoginBinding
+//import nl.mpcjanssen.simpletask.databinding.LoginBinding
 import nl.mpcjanssen.simpletask.task.Priority
 import nl.mpcjanssen.simpletask.task.Task
 import nl.mpcjanssen.simpletask.task.TodoList
@@ -36,6 +36,7 @@ class AddTask : ThemedActionBarActivity() {
     private var mBroadcastReceiver: BroadcastReceiver? = null
     private var localBroadcastManager: LocalBroadcastManager? = null
     private lateinit var binding: AddTaskBinding
+
     /*
         Deprecated functions still work fine.
         For now keep using the old version, will updated if it breaks.
@@ -91,37 +92,39 @@ class AddTask : ThemedActionBarActivity() {
             if (task != null) TodoApplication.todoList.pendingEdits.add(task)
         }
 
-        val pendingTasks = TodoApplication.todoList.pendingEdits.map { it.inFileFormat(TodoApplication.config.useUUIDs) }
-            val preFillString: String = when {
-                pendingTasks.isNotEmpty() -> {
-                    setTitle(R.string.updatetask)
-                    join(pendingTasks, "\n")
-                }
-                intent.hasExtra(Constants.EXTRA_PREFILL_TEXT) -> intent.getStringExtra(Constants.EXTRA_PREFILL_TEXT) ?: ""
-                intent.hasExtra(Query.INTENT_JSON) -> Query(intent, luaModule = "from_intent").prefill
-                else -> ""
-            }
-            startText = preFillString?:""
-            // Avoid discarding changes on rotate
-            if (binding.taskText.text.isEmpty()) {
-                binding.taskText.setText(preFillString)
+        val pendingTasks =
+            TodoApplication.todoList.pendingEdits.map { it.inFileFormat(TodoApplication.config.useUUIDs) }
+        val preFillString: String = when {
+            pendingTasks.isNotEmpty() -> {
+                setTitle(R.string.updatetask)
+                join(pendingTasks, "\n")
             }
 
-            setInputType()
+            intent.hasExtra(Constants.EXTRA_PREFILL_TEXT) -> intent.getStringExtra(Constants.EXTRA_PREFILL_TEXT)
+                ?: ""
+
+            intent.hasExtra(Query.INTENT_JSON) -> Query(intent, luaModule = "from_intent").prefill
+            else -> ""
+        }
+        startText = preFillString ?: ""
+        // Avoid discarding changes on rotate
+        if (binding.taskText.text.isEmpty()) {
+            binding.taskText.setText(preFillString)
+        }
+
+        setInputType()
 
 
-
-
-            // Set button callbacks
-            binding.btnContext.setOnClickListener { showListMenu() }
-            binding.btnProject.setOnClickListener { showTagMenu() }
-            binding.btnPrio.setOnClickListener { showPriorityMenu() }
-            binding.btnDue.setOnClickListener { insertDate(DateType.DUE) }
-            binding.btnThreshold.setOnClickListener { insertDate(DateType.THRESHOLD) }
-            binding.btnNext.setOnClickListener { addPrefilledTask() }
-            binding.btnSave.setOnClickListener { saveTasksAndClose() }
-            binding.taskText.requestFocus()
-            Selection.setSelection(binding.taskText.text,0)
+        // Set button callbacks
+        binding.btnContext.setOnClickListener { showListMenu() }
+        binding.btnProject.setOnClickListener { showTagMenu() }
+        binding.btnPrio.setOnClickListener { showPriorityMenu() }
+        binding.btnDue.setOnClickListener { insertDate(DateType.DUE) }
+        binding.btnThreshold.setOnClickListener { insertDate(DateType.THRESHOLD) }
+        binding.btnNext.setOnClickListener { addPrefilledTask() }
+        binding.btnSave.setOnClickListener { saveTasksAndClose() }
+        binding.taskText.requestFocus()
+        Selection.setSelection(binding.taskText.text, 0)
 
     }
 
@@ -148,10 +151,10 @@ class AddTask : ThemedActionBarActivity() {
         }
         val t = Task(line)
         val prefillItems = mutableListOf<String>()
-        t.lists?.let {lists ->
+        t.lists?.let { lists ->
             prefillItems.addAll(lists.map { "@$it" })
         }
-        t.tags?.let {tags ->
+        t.tags?.let { tags ->
             prefillItems.addAll(tags.map { "+$it" })
         }
 
@@ -193,24 +196,28 @@ class AddTask : ThemedActionBarActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-        // Respond to the action bar's Up/Home button
+            // Respond to the action bar's Up/Home button
             android.R.id.home -> {
                 finishEdit(confirmation = true)
             }
+
             R.id.menu_word_wrap -> {
                 val newVal = !TodoApplication.config.isWordWrap
                 TodoApplication.config.isWordWrap = newVal
                 setWordWrap(newVal)
                 item.isChecked = !item.isChecked
             }
+
             R.id.menu_capitalize_tasks -> {
                 TodoApplication.config.isCapitalizeTasks = !TodoApplication.config.isCapitalizeTasks
                 setInputType()
                 item.isChecked = !item.isChecked
             }
+
             R.id.menu_help -> {
                 showHelp()
             }
+
             else -> return super.onOptionsItemSelected(item)
         }
         return true
@@ -247,7 +254,11 @@ class AddTask : ThemedActionBarActivity() {
         todoList.update(origTasks, enteredTasks, TodoApplication.config.hasAppendAtEnd)
 
         // Save
-        todoList.notifyTasklistChanged(TodoApplication.config.todoUri, save = true, refreshMainUI = false)
+        todoList.notifyTasklistChanged(
+            TodoApplication.config.todoUri,
+            save = true,
+            refreshMainUI = false
+        )
         finishEdit(confirmation = false)
     }
 
@@ -288,13 +299,15 @@ class AddTask : ThemedActionBarActivity() {
                      * issue. The date is just replaced twice
                      */
                     val today = DateTime.today(TimeZone.getDefault())
-                    val dialog = DatePickerDialog(this@AddTask, DatePickerDialog.OnDateSetListener { _, year, month, day ->
-                        val date = DateTime.forDateOnly(year, month + 1, day)
-                        insertDateAtSelection(dateType, date)
-                    },
-                            today.year!!,
-                            today.month!! - 1,
-                            today.day!!)
+                    val dialog = DatePickerDialog(
+                        this@AddTask, DatePickerDialog.OnDateSetListener { _, year, month, day ->
+                            val date = DateTime.forDateOnly(year, month + 1, day)
+                            insertDateAtSelection(dateType, date)
+                        },
+                        today.year!!,
+                        today.month!! - 1,
+                        today.day!!
+                    )
 
                     val showCalendar = TodoApplication.config.showCalendar
                     dialog.datePicker.calendarViewShown = showCalendar
@@ -302,7 +315,10 @@ class AddTask : ThemedActionBarActivity() {
                     dialog.show()
                 } else {
                     if (!input.isEmpty()) {
-                        insertDateAtSelection(dateType, addInterval(DateTime.today(TimeZone.getDefault()), input))
+                        insertDateAtSelection(
+                            dateType,
+                            addInterval(DateTime.today(TimeZone.getDefault()), input)
+                        )
                     } else {
                         replaceDate(dateType, input)
                     }
@@ -335,19 +351,19 @@ class AddTask : ThemedActionBarActivity() {
         if (tasks.size == 0) {
             tasks.add(Task(""))
         }
-        tasks.forEach {task ->
-            task.tags?.let {items.addAll(it)}
+        tasks.forEach { task ->
+            task.tags?.let { items.addAll(it) }
         }
         val idx = getCurrentCursorLine()
         val task = getTasks().getOrElse(idx) { Task("") }
 
         updateItemsDialog(
-                TodoApplication.config.tagTerm,
-                listOf(task),
-                ArrayList(items),
-                Task::tags,
-                Task::addTag,
-                Task::removeTag
+            TodoApplication.config.tagTerm,
+            listOf(task),
+            ArrayList(items),
+            Task::tags,
+            Task::addTag,
+            Task::removeTag
         ) {
             if (idx != -1) {
                 tasks[idx] = task
@@ -363,7 +379,8 @@ class AddTask : ThemedActionBarActivity() {
         val priorities = Priority.values()
         val priorityCodes = priorities.mapTo(ArrayList()) { it.code }
 
-        builder.setItems(priorityCodes.toArray<String>(arrayOfNulls<String>(priorityCodes.size))
+        builder.setItems(
+            priorityCodes.toArray<String>(arrayOfNulls<String>(priorityCodes.size))
         ) { _, which -> replacePriority(priorities[which].code) }
 
         // Create the AlertDialog
@@ -386,20 +403,20 @@ class AddTask : ThemedActionBarActivity() {
         if (tasks.size == 0) {
             tasks.add(Task(""))
         }
-        tasks.forEach {task ->
-            task.lists?.let {items.addAll(it)}
+        tasks.forEach { task ->
+            task.lists?.let { items.addAll(it) }
         }
 
         val idx = getCurrentCursorLine()
         val task = getTasks().getOrElse(idx) { Task("") }
 
         updateItemsDialog(
-                TodoApplication.config.listTerm,
-                listOf(task),
-                ArrayList(items),
-                Task::lists,
-                Task::addList,
-                Task::removeList
+            TodoApplication.config.listTerm,
+            listOf(task),
+            ArrayList(items),
+            Task::lists,
+            Task::addList,
+            Task::removeList
         ) {
             if (idx != -1) {
                 tasks[idx] = task
@@ -425,7 +442,10 @@ class AddTask : ThemedActionBarActivity() {
         val start = binding.taskText.selectionStart
         val length = binding.taskText.text.length
         val lines = ArrayList<String>()
-        Collections.addAll(lines, *binding.taskText.text.toString().split("\\n".toRegex()).toTypedArray())
+        Collections.addAll(
+            lines,
+            *binding.taskText.text.toString().split("\\n".toRegex()).toTypedArray()
+        )
 
         // For some reason the currentLine can be larger than the amount of lines in the EditText
         // Check for this case to prevent any array index out of bounds errors
@@ -447,7 +467,10 @@ class AddTask : ThemedActionBarActivity() {
         val start = binding.taskText.selectionStart
         val length = binding.taskText.text.length
         val lines = ArrayList<String>()
-        Collections.addAll(lines, *binding.taskText.text.toString().split("\\n".toRegex()).toTypedArray())
+        Collections.addAll(
+            lines,
+            *binding.taskText.text.toString().split("\\n".toRegex()).toTypedArray()
+        )
 
         // For some reason the currentLine can be larger than the amount of lines in the EditText
         // Check for this case to prevent any array index out of bounds errors
@@ -487,7 +510,10 @@ class AddTask : ThemedActionBarActivity() {
         Log.d(TAG, "Current selection: $start-$end")
         val length = binding.taskText.text.length
         val lines = ArrayList<String>()
-        Collections.addAll(lines, *binding.taskText.text.toString().split("\\n".toRegex()).toTypedArray())
+        Collections.addAll(
+            lines,
+            *binding.taskText.text.toString().split("\\n".toRegex()).toTypedArray()
+        )
 
         // For some reason the currentLine can be larger than the amount of lines in the EditText
         // Check for this case to prevent any array index out of bounds errors
@@ -497,7 +523,10 @@ class AddTask : ThemedActionBarActivity() {
         }
         if (currentLine != -1) {
             val t = Task(lines[currentLine])
-            Log.d(TAG, "Changing priority from " + t.priority.toString() + " to " + newPriority.toString())
+            Log.d(
+                TAG,
+                "Changing priority from " + t.priority.toString() + " to " + newPriority.toString()
+            )
             t.priority = Priority.toPriority(newPriority.toString())
             lines[currentLine] = t.inFileFormat(TodoApplication.config.useUUIDs)
             binding.taskText.setText(join(lines, "\n"))
@@ -515,8 +544,10 @@ class AddTask : ThemedActionBarActivity() {
                 text = " $text"
             }
         }
-        binding.taskText.text.replace(Math.min(start, end), Math.max(start, end),
-                text, 0, text.length)
+        binding.taskText.text.replace(
+            Math.min(start, end), Math.max(start, end),
+            text, 0, text.length
+        )
     }
 
     public override fun onDestroy() {

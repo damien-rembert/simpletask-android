@@ -67,7 +67,6 @@ class TodoList(val config: Config) {
     }
 
     val priorities: ArrayList<Priority>
-
         get() {
             val res = HashSet<Priority>()
             todoItems.forEach {
@@ -79,7 +78,6 @@ class TodoList(val config: Config) {
         }
 
     val contexts: List<String>
-
         get() {
             val lists = mLists
             if (lists != null) {
@@ -87,7 +85,7 @@ class TodoList(val config: Config) {
             }
             val res = HashSet<String>()
             todoItems.forEach { t ->
-                t.lists?.let {res.addAll(it)}
+                t.lists?.let { res.addAll(it) }
 
             }
             val newLists = res.toMutableList()
@@ -96,7 +94,6 @@ class TodoList(val config: Config) {
         }
 
     val projects: List<String>
-
         get() {
             val tags = mTags
             if (tags != null) {
@@ -104,7 +101,7 @@ class TodoList(val config: Config) {
             }
             val res = HashSet<String>()
             todoItems.forEach { t ->
-                t.tags?.let {res.addAll(it)}
+                t.tags?.let { res.addAll(it) }
 
             }
             val newTags = res.toMutableList()
@@ -173,21 +170,21 @@ class TodoList(val config: Config) {
     }
 
     val selectedTasks: List<Task>
-
         get() {
             return todoItems.toList().filter { it.selected }
         }
 
-    val fileFormat : String =  todoItems.toList().joinToString(separator = "\n", transform = {
+    val fileFormat: String = todoItems.toList().joinToString(separator = "\n", transform = {
         it.inFileFormat(config.useUUIDs)
     })
 
 
-
-    fun notifyTasklistChanged(todoUri: Uri?,
-            save: Boolean,
-            refreshMainUI: Boolean = true,
-            forceKeepSelection: Boolean = false) {
+    fun notifyTasklistChanged(
+        todoUri: Uri?,
+        save: Boolean,
+        refreshMainUI: Boolean = true,
+        forceKeepSelection: Boolean = false
+    ) {
         if (todoUri == null) {
             Log.e(tag, "No todo uri this should be refactored to be impossible")
             return
@@ -220,7 +217,13 @@ class TodoList(val config: Config) {
 
     fun getMultiComparator(filter: Query, caseSensitive: Boolean): MultiComparator {
         val sorts = filter.getSort(config.defaultSorts)
-        return MultiComparator(sorts, TodoApplication.app.today, caseSensitive, filter.createIsThreshold, filter.luaModule)
+        return MultiComparator(
+            sorts,
+            TodoApplication.app.today,
+            caseSensitive,
+            filter.createIsThreshold,
+            filter.luaModule
+        )
     }
 
     fun getSortedTasks(filter: Query, caseSensitive: Boolean): Pair<List<Task>, Int> {
@@ -272,32 +275,32 @@ class TodoList(val config: Config) {
 //        if (needSync) {
 //            Log.i(tag, "Remote version is different, sync")
         Log.i(tag, "Loading remote version")
-            try {
+        try {
 //                val items = FileStore.loadTasksFromFile(file)
             val remoteContents = FileStore.loadFile(uri)
             val items = remoteContents.lines()
 
-                val newTodoItems = items.map { Task(it) }.toMutableList()
-                synchronized(todoItems) {
-                    Log.d(tag, "Fill todolist with ${items.size} items")
+            val newTodoItems = items.map { Task(it) }.toMutableList()
+            synchronized(todoItems) {
+                Log.d(tag, "Fill todolist with ${items.size} items")
                 Log.i(tag, "Updating cache with remote version")
                 todoItems = newTodoItems
                 config.todoList = todoItems.toList()
-                    config.todoList = todoItems.toList()
+                config.todoList = todoItems.toList()
                 config.lastSeenRemoteContent = remoteContents
-                }
-                // Update cache
-                // Backup
-                FileStoreActionQueue.add("Backup") {
-                    Backupper.backup(uri, items)
-                }
-                notifyTasklistChanged(uri, save = false, refreshMainUI = true)
+            }
+            // Update cache
+            // Backup
+            FileStoreActionQueue.add("Backup") {
+                Backupper.backup(uri, items)
+            }
+            notifyTasklistChanged(uri, save = false, refreshMainUI = true)
         } catch (e: Exception) {
             Log.e(tag, "TodoList load failed: ${uri.path}", e)
             showToastShort(TodoApplication.app, "Loading of todo file failed")
         }
 
-            Log.i(tag, "TodoList loaded from filestore")
+        Log.i(tag, "TodoList loaded from filestore")
         // TODO: implement with SAF
 //        } else {
 //            Log.i(tag, "Remote version is same, load from cache")
@@ -318,8 +321,9 @@ class TodoList(val config: Config) {
         }
         // Update cache
         FileStoreActionQueue.add("Backup") {
-                Backupper.backup(todoUri, lines)
+            Backupper.backup(todoUri, lines)
         }
+        // TODO: implement with SAF
         runOnMainThread {
             timer?.apply { cancel() }
             val saveAction = {
@@ -329,29 +333,33 @@ class TodoList(val config: Config) {
                         Log.i(tag, "Saving todo list, size ${lines.size}")
                         // val newFile = fileStore.saveTasksToFile(todoFile, lines, eol = eol).canonicalPath
 
-                            val remoteContents = fileStore.loadFile(todoUri)
-                            if (remoteContents != config.lastSeenRemoteContent) {
-                                // Todo: Handle conflict
-                            }
-                            fileStore.saveFile(todoUri, lines.joinToString (eol))
+                        val remoteContents = fileStore.loadFile(todoUri)
+                        if (remoteContents != config.lastSeenRemoteContent) {
+                            // Todo: Handle conflict
+                        }
+                        fileStore.saveFile(todoUri, lines.joinToString(eol))
                         if (config.changesPending) {
                             // Remove the red bar
                             config.changesPending = false
                             broadcastUpdateStateIndicator(TodoApplication.app.localBroadCastManager)
                         }
-                        if (newFile != todoFile.canonicalPath) {
-                            // The file was written under another name
-                            // Usually this means the was a conflict.
-                            Log.i(tag, "Filename was changed remotely. New name is: $newFile")
-                            showToastLong(TodoApplication.app, "Filename was changed remotely. New name is: $newFile")
-                            TodoApplication.app.switchTodoFile(File(newFile))
-                        }
+                        // TODO: implement with SAF?
+//                        if (newFile != todoFile.canonicalPath) {
+//                            // The file was written under another name
+//                            // Usually this means the was a conflict.
+//                            Log.i(tag, "Filename was changed remotely. New name is: $newFile")
+//                            showToastLong(
+//                                TodoApplication.app,
+//                                "Filename was changed remotely. New name is: $newFile"
+//                            )
+//                            TodoApplication.app.switchTodoFile(File(newFile))
+//                        }
 
                     } catch (e: Exception) {
-                            Log.e(tag, "TodoList save to ${todoUri.path} failed", e)
+                        Log.e(tag, "TodoList save to ${todoUri.path} failed", e)
                         config.changesPending = true
-                            showToastShort(TodoApplication.app, "Saving of todo file failed")
-                        }
+                        showToastShort(TodoApplication.app, "Saving of todo file failed")
+                    }
                     broadcastFileSyncDone(TodoApplication.app.localBroadCastManager)
                 }
             }
@@ -362,6 +370,7 @@ class TodoList(val config: Config) {
                     Log.d(tag, "Executing pending Save")
                     saveAction()
                 }
+
                 override fun onTick(p0: Long) {
                     Log.d(tag, "Scheduled save in $p0")
                 }
@@ -459,7 +468,7 @@ class TodoList(val config: Config) {
     }
 
 
-    fun each (callback : (Task) -> Unit) {
+    fun each(callback: (Task) -> Unit) {
         todoItems.forEach { callback.invoke(it) }
     }
 

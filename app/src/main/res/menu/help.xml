@@ -46,10 +46,4 @@
         android:orderInCategory="100"
         app:showAsAction="never"
         />
-    <item
-        android:id="@+id/menu_donate"
-        android:title="Donate"
-        android:orderInCategory="100"
-        app:showAsAction="never"
-        />
 </menu>

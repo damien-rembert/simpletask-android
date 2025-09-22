@@ -5,8 +5,8 @@ import android.app.Dialog
 import android.content.DialogInterface
 import androidx.appcompat.app.AlertDialog
 import android.util.Log
-import nl.mpcjanssen.simpletask.remote.IFileStore.Companion.PARENT_DIR
-import nl.mpcjanssen.simpletask.remote.IFileStore.Companion.ROOT_DIR
+// import nl.mpcjanssen.simpletask.remote.IFileStore.Companion.PARENT_DIR
+// import nl.mpcjanssen.simpletask.remote.IFileStore.Companion.ROOT_DIR
 import nl.mpcjanssen.simpletask.util.ListenerList
 import nl.mpcjanssen.simpletask.util.runOnMainThread
 import nl.mpcjanssen.simpletask.util.showLoadingOverlay

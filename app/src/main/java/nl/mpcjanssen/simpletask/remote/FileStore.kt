@@ -14,7 +14,7 @@ import java.util.*
 import kotlin.reflect.KClass
 import android.provider.DocumentsContract
 import android.provider.OpenableColumns
-import androidx.room.util.CursorUtil.getColumnIndexOrThrow
+// import androidx.room.util.CursorUtil.getColumnIndexOrThrow
 import androidx.documentfile.provider.DocumentFile
 import nl.mpcjanssen.simpletask.Simpletask
 import java.io.*
@@ -28,13 +28,13 @@ object FileStore : IFileStore {
             it.persistedUriPermissions
             it.refresh(uri, null, null)
             it.openInputStream(uri)?.use { inputStream ->
-                inputStream.bufferedReader(Charsets.UTF_8).use {return it.readText() }
+                inputStream.bufferedReader(Charsets.UTF_8).use { return it.readText() }
             }
         }
         throw IOException("File error $uri")
     }
 
-    override fun saveFile (uri: Uri, contents: String) {
+    override fun saveFile(uri: Uri, contents: String) {
 
         TodoApplication.app.applicationContext.contentResolver.let {
             it.persistedUriPermissions

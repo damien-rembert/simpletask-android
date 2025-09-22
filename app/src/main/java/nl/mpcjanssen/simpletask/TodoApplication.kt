@@ -199,8 +199,9 @@ class TodoApplication : Application() {
         super.onTerminate()
     }
 
-    fun switchTodoFile(newTodo: File) {
-// TODO: check this after SAF changes
+    fun switchTodoUri(newTodo: Uri, takeFlags: Int) {
+        // TODO: do something with flags
+        // TODO: check this after SAF changes
 //         if (config.changesPending) {
 //             // Don't switch files when there are pending changes. This will lead to
 //             // data corruption
@@ -211,10 +212,16 @@ class TodoApplication : Application() {
 //             loadTodoList("from file switch")
 //         }
         applicationContext.contentResolver.let { resolver ->
-            resolver.takePersistableUriPermission(newTodo, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+            resolver.takePersistableUriPermission(
+                newTodo,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            )
             resolver.persistedUriPermissions.forEach {
                 if (it.uri != newTodo) {
-                    resolver.releasePersistableUriPermission(it.uri, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                    resolver.releasePersistableUriPermission(
+                        it.uri,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                    )
                 }
             }
 

@@ -25,7 +25,7 @@ plugins {
 
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
+// apply plugin: 'kotlin-android-extensions'
 // apply plugin: 'kotlin-kapt'
 
 if (!project.hasProperty("storeP12File")) {
