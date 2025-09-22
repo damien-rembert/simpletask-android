@@ -9,12 +9,12 @@ jobs:
 
     steps:
       - name: "Checkout"
-        uses: actions/checkout@v1
+        uses: actions/checkout@v5
       - name: "Run build"
         #      run: ./gradlew assembleEncryptedDebug
         run: ./gradlew assembleDebug
       - name: "Save output artifacts"
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: apks
           path: app/build/outputs/apk
