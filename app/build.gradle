@@ -25,8 +25,6 @@ plugins {
 
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
-// apply plugin: 'kotlin-android-extensions'
-// apply plugin: 'kotlin-kapt'
 
 if (!project.hasProperty("storeP12File")) {
     ext.storeP12File = file("/")
@@ -134,13 +132,11 @@ dependencies {
 //    implementation "androidx.preference:preference:1.0.0"
     implementation 'androidx.appcompat:appcompat:1.4.1'
     implementation "androidx.recyclerview:recyclerview:1.2.1"
-    // kapt "androidx.room:room-compiler:2.8.0"
     // implementation "androidx.room:room-runtime:2.4.2"
     implementation "androidx.room:room-runtime:$room_version"
     ksp "androidx.room:room-compiler:$room_version"
 
 
-    // For Kotlin use kapt instead of annotationProcessor
     implementation 'com.atlassian.commonmark:commonmark:0.11.0'
     implementation 'com.darwinsys:hirondelle-date4j:1.5.1'
     implementation 'org.luaj:luaj-jse:3.0.1'
@@ -153,7 +149,7 @@ dependencies {
         exclude group: 'com.android.support', module: 'support-annotations'
     }
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.8.1'
-    def withoutJUnit = { exclude group: 'junit', module: 'junit' }
+    // def withoutJUnit = { exclude group: 'junit', module: 'junit' }
 
 //    webdavImplementation ('org.simpleframework:simple-xml:2.7.1')  {
 //        exclude module: 'stax'
