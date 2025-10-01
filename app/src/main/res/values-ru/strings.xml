@@ -161,7 +161,7 @@
     <string name="all">все</string>
     <string name="dates_days_ago">%d дней назад</string>
     <string name="dates_one_day_ago">1 день назад</string>
-    <string name="dates_years_ago"/>
+    <string name="dates_years_ago">%d лет назад</string>
     <string name="dates_one_year_ago">год назад</string>
     <string name="dates_tomorrow">завтра</string>
     <string name="date_pick">выбрать дату</string>
